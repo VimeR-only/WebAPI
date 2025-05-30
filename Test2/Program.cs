@@ -23,6 +23,7 @@ namespace Test2
             options.UseSqlite("Data Source=users.db"));
 
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IPostService, PostService>();
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             var app = builder.Build();

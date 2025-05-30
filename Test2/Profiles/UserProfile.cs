@@ -8,5 +8,10 @@ public class UserProfile : Profile
         CreateMap<User, UserReadDto>();
         CreateMap<UserCreateDto, User>();
         CreateMap<UserUpdateDto, User>();
+
+        CreateMap<User, UserReadDto>()
+            .ForMember(dest => dest.Posts, opt => opt.MapFrom(src => src.Posts));
+        
+        CreateMap<Post, PostInUserDto>();
     }
 }

@@ -17,13 +17,18 @@ public class UserService : IUserService
 
     public async Task<IEnumerable<UserReadDto>> GetAllAsync()
     {
-        var users = await _context.Users.ToListAsync();
+        var users = await _context.Users
+            .Include(u => u.Posts)
+            .ToListAsync();
         return _mapper.Map<IEnumerable<UserReadDto>>(users);
     }
 
     public async Task<UserReadDto?> GetByIdAsync(int id)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _context.Users
+            .Include(u => u.Posts)
+            .FirstOrDefaultAsync(u => u.Id == id);
+
         return user == null ? null : _mapper.Map<UserReadDto>(user);
     }
 

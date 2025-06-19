@@ -5,6 +5,7 @@ using BlogProject.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlogProject.Controllers
 {
@@ -40,18 +41,40 @@ namespace BlogProject.Controllers
             return Ok(post);
         }
 
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPaged(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            var (posts, totalCount) = await _postService.GetPagedPostsAsync(pageNumber, pageSize);
+
+            return Ok(new
+            {
+                TotalItems = totalCount,
+                CurrentPage = pageNumber,
+                PageSize = pageSize,
+                Items = posts
+            });
+        }
+
         [HttpPut("{id}")]
         public async Task<ActionResult<Post>> UpdatePost(int id, PostCreateDto dto)
         {
+            var userRole = User.FindFirstValue(ClaimTypes.Role);
             var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var post = await _postService.GetPostByIdAsync(id);
 
-            var post = _postService.UpdatePostAsync(id, dto, userId);
+            if (post.UserId != userId && userRole != "Admin")
+                return Unauthorized();
 
-            if (post == null) return NotFound();
+            var newPost = _postService.UpdatePostAsync(id, dto, userId);
 
-            return Ok(post);
+            if (newPost == null) return NotFound();
+
+            return Ok(newPost);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePost(int id)
         {
@@ -72,6 +95,32 @@ namespace BlogProject.Controllers
             var posts = await _postService.GetPostByIdAsync(userId);
 
             return Ok(posts);
+        }
+
+        [HttpGet("all")]
+        public async Task<ActionResult<List<PostDto>>> GetAll()
+        {
+            var posts = await _postService.GetAllPostsAsync();
+            return Ok(posts);
+        }
+
+        [AllowAnonymous]
+        [HttpPost("seed")]
+        public async Task<IActionResult> Seed()
+        {
+            await _postService.SeedPostsAsync(50, 1);
+            return Ok("Seed complete.");
+        }
+
+        [Authorize]
+        [HttpPost("with-image")]
+        public async Task<IActionResult> CreateWithImage([FromForm] PostWithImageDto dto)
+        {
+           var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+           var post = await _postService.CreateWithImage(dto, userId);
+
+           return Ok(post);
         }
 
     }

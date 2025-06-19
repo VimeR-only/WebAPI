@@ -27,7 +27,7 @@ namespace BlogProject.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(UserRegisterDto dto)
         {
-            if (await _db.Users.AnyAsync(u => u.Username == dto.UserName)) 
+            if (await _db.Users.AnyAsync(u => u.Username == dto.UserName))
                 return BadRequest("Username already exists");
 
             CreatePasswordHash(dto.Password, out byte[] hash, out byte[] salt);
@@ -36,14 +36,15 @@ namespace BlogProject.Controllers
             {
                 Username = dto.UserName,
                 PasswordHash = hash,
-                PasswordSalt = salt
+                PasswordSalt = salt,
+                Role = UserRole.Admin,
             };
 
             _db.Users.Add(user);
 
             await _db.SaveChangesAsync();
 
-            return Ok("User regist");
+            return Ok("User registered");
         }
 
         [HttpPost("login")]
@@ -64,7 +65,8 @@ namespace BlogProject.Controllers
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Username)
+                new Claim(ClaimTypes.Name, user.Username),
+                new Claim(ClaimTypes.Role, user.Role.ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));

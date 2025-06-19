@@ -2,6 +2,8 @@
 
 namespace BlogProject.Models
 {
+    public enum UserRole { User, Admin }
+
     public class User
     {
         public int Id { get; set; }
@@ -14,5 +16,7 @@ namespace BlogProject.Models
 
         [Required]
         public byte[] PasswordSalt { get; set; }
+
+        public UserRole Role { get; set; } = UserRole.User;
     }
 }
